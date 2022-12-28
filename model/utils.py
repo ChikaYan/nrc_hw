@@ -3,6 +3,7 @@ import torch
 import dataclasses
 import xml.etree.ElementTree as ET
 import drjit as dr
+from copy import deepcopy, copy
 
 def _nonzero(x, eta=1e-10):
     # x = x.clone()
@@ -68,7 +69,6 @@ class BounceInfo():
 
 
     def gather_training_data(self):
-        inputs = []
         outputs = []
 
         p = []
@@ -97,7 +97,7 @@ class BounceInfo():
                 wi.append(self.si[bounce_id].wi.numpy()[active_mask])
                 n.append(self.si[bounce_id].n.numpy()[active_mask])
                 diff_ref.append(self.diffuse_reflectance[bounce_id][active_mask]) 
-                spec_ref.append(self.specular_reflectance[bounce_id].numpy()[active_mask]) 
+                spec_ref.append(self.specular_reflectance[bounce_id][active_mask]) 
                 rough.append(self.roughness[bounce_id][active_mask, None])
 
                 outputs.append(radiance.numpy()[active_mask,:])
@@ -119,16 +119,16 @@ class BounceInfo():
 
         return data
 
-    def get_training_input(self, bounce_id):
-        mask = self.active[bounce_id]
-        return [
-            self.si[bounce_id].p.numpy()[mask],
-            self.si[bounce_id].wi.numpy()[mask],
-            self.si[bounce_id].n.numpy()[mask],
-            self.diffuse_reflectance[bounce_id][mask], 
-            self.specular_reflectance[bounce_id].numpy()[mask], 
-            self.roughness[bounce_id][mask, None]
-        ]
+    # def get_training_input(self, bounce_id):
+    #     mask = self.active[bounce_id]
+    #     return [
+    #         self.si[bounce_id].p.numpy()[mask],
+    #         self.si[bounce_id].wi.numpy()[mask],
+    #         self.si[bounce_id].n.numpy()[mask],
+    #         self.diffuse_reflectance[bounce_id][mask], 
+    #         self.specular_reflectance[bounce_id][mask], 
+    #         self.roughness[bounce_id][mask, None]
+    #     ]
 
 
 
@@ -185,8 +185,7 @@ class ReflectanceInfo():
         
         # create a (127 x 7) matrix (for numpy parallelisation), default: -1
         # l[-1] is the largest element (for elements not present, e.g. 5, just kept as default)
-        self.id_prop_dict = np.ones((l[-1] + 1, 7))
-        self.id_prop_dict *= -1
+        self.id_prop_dict = np.full((l[-1] + 1, 7), -1.)
 
         # populate the matrix using values in prop_dict, if not, keep default
         for m_id, m_str_name in self.id_str_dict.items():
@@ -246,6 +245,9 @@ def calculate_cos_dr(t1, t2, eta=1e-10):
 
 # equation 3 in NRC paper: spread at n-th vertex (to be added into the summation)
 def vertex_spread_dr(x_i_1, x_i, pdf_bsdf, wi, n):
+    '''
+    x_i_1: x_i - 1, the previous intersection
+    '''
     cos_theta = calculate_cos_dr(wi, n)
     nominator = dr.sum((x_i_1 - x_i)**2)
     denominator = pdf_bsdf * dr.abs(cos_theta)

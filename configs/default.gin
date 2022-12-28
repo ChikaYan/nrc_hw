@@ -1,10 +1,11 @@
 
-NrcConfig.training_samples = 100
 NrcConfig.reflectance_factorisation = True
 NrcConfig.first_frame_training = True
 
 RenderConfig.short_depth = 2
 RenderConfig.long_depth = 4
 RenderConfig.scene_path = "/home/tw554/nrc_hw/scenes/living-room-2/scene_v3_extended.xml"
+RenderConfig.log_dir = "/home/tw554/nrc_hw/logs/test"
+RenderConfig.spp = 1
 
 

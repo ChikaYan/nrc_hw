@@ -9,7 +9,7 @@ class NrcConfig():
     NRC neural network configurations
     '''
     # Number of rays used to train NRC
-    training_samples: int = 100
+    training_samples: int = 4096 * 4 * 4
     # TODO: not sure what this does
     reflectance_factorisation: bool = False
     # Train all rays for first frame
@@ -17,7 +17,7 @@ class NrcConfig():
     # 
     activate_nrc: bool = True
     # Learning rate for network optimizer
-    optim_lr: float = 1e-4
+    optim_lr: float = 5e-3
     # Number of training steps per frame
     steps_per_frame: int = 4
 
@@ -40,6 +40,10 @@ class RenderConfig():
     visualise_primary: bool = False
     # only return nrc predicted rendering
     output_only_nrc: bool = False
+    # Log dir
+    log_dir: str = None
+    # Sample (ray) per pixel
+    spp: int = 1
 
 
 
